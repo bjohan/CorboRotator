@@ -30,17 +30,12 @@ module xqs5040DServo(){
     }
 }
 
-
-
-
 module tube(l, ro, ri){
     difference(){
         cylinder(l, ro, ro);
         cylinder(l, ri, ri); 
     }
 }
-
-
 
 module tooth(h, r){
     //cylinder(h,r,r);
@@ -81,7 +76,33 @@ module belt(n, delta, h, t){
     teeth(n, delta, h, 0.5);
 }
 
+module relievedSlit(l, h, w, r){
+    translate([-l/2, -w/2, 0])
+        cube([l,w,h]);
+    translate([0,0,h])
+        rotate([0,90,0])
+            translate([0,0,-l/2])
+                cylinder(l, r, r);
+}
 
+module radialHoles(l, r){
+    rotate([0,90,0])
+        translate([0,0,-l/2])
+            cylinder(l,r,r);
+    rotate([0,0,90])
+        rotate([0,90,0])
+            translate([0,0,-l/2])
+                cylinder(l,r,r);
+    rotate([0,0,45]){
+        rotate([0,90,0])
+            translate([0,0,-l/2])
+                cylinder(l,r,r);
+        rotate([0,0,90])
+            rotate([0,90,0])
+                translate([0,0,-l/2])
+                    cylinder(l,r,r);
+    }
+}
 
 //pulley(130, 2, 10, 30, 2);
 //teeth(100, 2, 10, 0.5);
@@ -94,12 +115,25 @@ module stator(){
     //mastRad = 30;
     //t = 5;
     //height = 100;
-    tube(height, mastRad+t, mastRad);
-    tube(height/2, mastRad+t*2, mastRad);
-    translate([0,0,height])
-        cylinder(t, mastRad+t, mastRad+t);
-    translate([0,0,height/2-14])
-        pulley(125, 2, 10, 30, 2);
+    difference(){
+        union(){
+            tube(height, mastRad+t, mastRad);
+            tube(height/2, mastRad+t*2, mastRad);
+            translate([0,0,height])
+                cylinder(t, mastRad+t, mastRad+t);
+            translate([0,0,height/2-14])
+                pulley(125, 2, 10, 30, 2);
+        }
+        relievedSlit(150, 35, 2, 2);
+        rotate([0,0,90])
+            relievedSlit(150, 35, 2, 2);
+        rotate([0,0,45]){
+            relievedSlit(150, 35, 2, 2);
+            rotate([0,0,90])
+                relievedSlit(150, 35, 2, 2);
+        }
+    
+    }
 }
 
 module servoPlate(t){
@@ -120,16 +154,20 @@ module servoPlate(t){
 }
 
 module servoMount(){
-    tube(30, mastRad+t*3, mastRad+t*2);
+    
     difference(){
-        servoPlate(5);
-        translate([65,0,-1]){
-            rotate([0,0,90]){
-                xqs5040DServoHoles(10,3);
-                //xqs5040DServoBody();
+        union(){
+            tube(30, mastRad+t*3, mastRad+t*2);
+            difference(){
+                servoPlate(5);
+                translate([65,0,-1]){
+                    rotate([0,0,90]){
+                        xqs5040DServoHoles(10,3);
+                        //xqs5040DServoBody();
+                    }
+                }
             }
         }
-        
         translate([65,0,6]){
             rotate([0,0,90]){
                 //xqs5040DServoHoles(10,3);
@@ -139,13 +177,21 @@ module servoMount(){
                 }
             }
         }
+        translate([0,0,5+25/2])
+            radialHoles(200,4/2);
     }
 }
 
 module rotor(){
-    tube(height/2, mastRad+t*2, mastRad);
-    translate([0,0,height/2])
-        cylinder(t, mastRad+t*2, mastRad+t*2);
+    difference(){
+        union(){
+            tube(height/2, mastRad+t*2, mastRad+0.25);
+            translate([0,0,height/2])
+                cylinder(t, mastRad+t*2, mastRad+t*2);
+        }
+        translate([0,0,5+25/2])
+            radialHoles(200,3/2);
+    }
     //pulley(125, 2, 10, 30, 2);
 }
 
@@ -190,10 +236,11 @@ module servoPulleyPlaced(){
 }
 
 
+servoMount();
+//rotorPlaced();
+//statorPlaced();
 
-rotorPlaced();
-statorPlaced();
-servoMountPlaced();
-servoPlaced();
-servoPulleyPlaced();
-belt(150, 2, 10, 1);
+//servoMountPlaced();
+//servoPlaced();
+//servoPulleyPlaced();
+//belt(150, 2, 10, 1);
