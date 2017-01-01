@@ -122,7 +122,7 @@ module stator(){
             translate([0,0,height])
                 cylinder(t, mastRad+t, mastRad+t);
             translate([0,0,height/2-14])
-                pulley(125, 2, 10, 30, 2);
+                pulley(124/2, 4, 10, 30, 2);
         }
         relievedSlit(150, 35, 2, 2);
         rotate([0,0,90])
@@ -183,11 +183,12 @@ module servoMount(){
 }
 
 module rotor(){
+    t=5;
     difference(){
         union(){
-            tube(height/2, mastRad+t*2, mastRad+0.25);
+            tube(height/2, mastRad+t*2-0.4, mastRad+5+0.5);
             translate([0,0,height/2])
-                cylinder(t, mastRad+t*2, mastRad+t*2);
+                cylinder(t, mastRad+t*2-0.4, mastRad+t*2-0.4);
         }
         translate([0,0,5+25/2])
             radialHoles(200,3/2);
@@ -222,13 +223,23 @@ module servoPlaced(){
     }
 }
 
+module servoPulley(){
+    difference(){
+        pulley(8, 4, 10, 1, 2);
+        cylinder(5,8/2, 8/2);
+        translate([0,0,7])
+            cylinder(15,3.25, 3.25);
+    }
+}
+
 module servoPulleyPlaced(){
     translate([0,0,51]){
         translate([65,0,10]){
             rotate([0,0,90]){
                 rotate([180,0,0])
                     translate([0,0,11]){
-                        pulley(15, 2, 10, 2, 2);
+                        servoPulley();
+                        //pulley(15, 2, 10, 2, 2);
                     }
             }
         }
@@ -236,10 +247,57 @@ module servoPulleyPlaced(){
 }
 
 
-servoMount();
+module printServoMount(){
+    servoMount();
+}
+
+module printRotor(){
+    rotate([180,0,0])
+        rotor();
+}
+
+module printStator(){
+    rotate([180,0,0])
+        stator();
+}
+
+module printServoPulley(){
+    servoPulley();
+}
+
+module completeAssembly(){
+    rotorPlaced();
+    statorPlaced();
+    servoMountPlaced();
+    servoPlaced();
+    servoPulleyPlaced();
+}
+
+module checkGeometry(){
+    intersection(){
+        rotorPlaced();
+        statorPlaced();
+        servoMountPlaced();
+        servoPlaced();
+        servoPulleyPlaced();
+    }
+}
+
+//checkGeometry();
+
+//printServoMount();
+printRotor();
+//printStator();
+//printServoPulley();
+
+//servoPulley();
+//printRotor();
+//servoMount();
+
+//completeAssembly();
+
 //rotorPlaced();
 //statorPlaced();
-
 //servoMountPlaced();
 //servoPlaced();
 //servoPulleyPlaced();
