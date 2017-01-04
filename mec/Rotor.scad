@@ -1,3 +1,4 @@
+include <publicDomainGearV1.1.scad>
 module xqs5040DServoHoles(h,r){
         translate([-15,0,0]){
             translate([-1.5-3, 11/2+3])
@@ -109,8 +110,8 @@ module radialHoles(l, r){
 
 mastRad = 30;
 t = 5;
-height = 100;
-
+height = 130;
+mmPerTooth = 4.5;
 module stator(){
     //mastRad = 30;
     //t = 5;
@@ -118,11 +119,12 @@ module stator(){
     difference(){
         union(){
             tube(height, mastRad+t, mastRad);
-            tube(height/2, mastRad+t*2, mastRad);
+            tube(height/2, mastRad+t, mastRad);
             translate([0,0,height])
                 cylinder(t, mastRad+t, mastRad+t);
-            translate([0,0,height/2-14])
-                pulley(124/2, 4, 10, 30, 2);
+            //translate([0,0,height/2-14+8])
+            //    gear(mmPerTooth,75,12,10);
+                //pulley(124/2, 4, 10, 30, 2);
         }
         relievedSlit(150, 35, 2, 2);
         rotate([0,0,90])
@@ -132,6 +134,36 @@ module stator(){
             rotate([0,0,90])
                 relievedSlit(150, 35, 2, 2);
         }
+        translate([0,0,48])
+            radialHoles(150, 1.5);
+    
+    }
+}
+
+module statorGear(){
+    //mastRad = 30;
+    //t = 5;
+    //height = 100;
+    difference(){
+        union(){
+            //tube(, mastRad+t, mastRad);
+            tube(30, mastRad+t*2, mastRad+t);
+            
+            translate([0,0,30-6])
+                gear(mmPerTooth,75,12,1);
+                //pulley(124/2, 4, 10, 30, 2);
+        }
+        translate([0,0,9])
+        radialHoles(150, 2);
+        cylinder(30, mastRad+t+0.25, mastRad+t+0.25);
+        /*relievedSlit(150, 35, 2, 2);
+        rotate([0,0,90])
+            relievedSlit(150, 35, 2, 2);
+        rotate([0,0,45]){
+            relievedSlit(150, 35, 2, 2);
+            rotate([0,0,90])
+                relievedSlit(150, 35, 2, 2);
+        }*/
     
     }
 }
@@ -225,8 +257,10 @@ module servoPlaced(){
 
 module servoPulley(){
     difference(){
-        pulley(8, 4, 10, 1, 2);
-        cylinder(5,8/2, 8/2);
+        translate([0,0,6])
+            gear(mmPerTooth,16,12,1);
+        //pulley(8, 4, 10, 1, 2);
+        cylinder(5,8/2-0.25, 8/2-0.25);
         translate([0,0,7])
             cylinder(15,3.25, 3.25);
     }
@@ -261,16 +295,31 @@ module printStator(){
         stator();
 }
 
+
+module printStatorGear(){
+    rotate([180,0,0])
+        statorGear();
+}
+
 module printServoPulley(){
     servoPulley();
 }
 
+module statorGearPlaced(){
+    translate([0,0,39])
+        statorGear();
+}
+
 module completeAssembly(){
-    rotorPlaced();
+    
     statorPlaced();
-    servoMountPlaced();
-    servoPlaced();
-    servoPulleyPlaced();
+    translate([0,0,19]){
+        rotorPlaced();
+        servoMountPlaced();
+        servoPlaced();
+        servoPulleyPlaced();
+    }
+    statorGearPlaced();
 }
 
 module checkGeometry(){
@@ -286,8 +335,8 @@ module checkGeometry(){
 //checkGeometry();
 
 //printServoMount();
-printRotor();
-//printStator();
+//printRotor();
+printStator();
 //printServoPulley();
 
 //servoPulley();
@@ -295,10 +344,14 @@ printRotor();
 //servoMount();
 
 //completeAssembly();
+//printStatorGear();
+//printServoPulley();
 
 //rotorPlaced();
 //statorPlaced();
 //servoMountPlaced();
 //servoPlaced();
 //servoPulleyPlaced();
-//belt(150, 2, 10, 1);
+//belt(73, 4, 8, 1.5, $fn=100);
+//gear(mm_per_tooth,n1,thickness,hole);
+//gear(9,11,20,3);
