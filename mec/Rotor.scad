@@ -5,9 +5,9 @@ module xqs5040DServoHoles(h,r){
                 cylinder(h, r, r);
             translate([-1.5-3, -11/2-3])
                 cylinder(h, r, r);
-            translate([64.5, 11/2+3])
+            translate([64.5-0.5, 11/2+3])
                 cylinder(h, r, r);
-            translate([64.5, -11/2-3])
+            translate([64.5-0.5, -11/2-3])
                 cylinder(h, r, r);
         }
 }
@@ -189,28 +189,48 @@ module servoMount(){
     
     difference(){
         union(){
-            tube(30, mastRad+t*3, mastRad+t*2);
             difference(){
-                servoPlate(5);
-                translate([65,0,-1]){
-                    rotate([0,0,90]){
-                        xqs5040DServoHoles(10,3);
-                        //xqs5040DServoBody();
+                union(){
+                    tube(30, mastRad+t*3, mastRad+t*2);
+                    difference(){
+                        servoPlate(5);
+                        /*translate([65,0,-1]){
+                            rotate([0,0,90]){
+                                xqs5040DServoHoles(10,3);
+                                //xqs5040DServoBody();
+                            }
+                        }*/
                     }
                 }
-            }
-        }
-        translate([65,0,6]){
-            rotate([0,0,90]){
-                //xqs5040DServoHoles(10,3);
-                minkowski(){
-                    xqs5040DServoBody();
-                    sphere(1);
+                translate([65,0,6]){
+                    rotate([0,0,90]){
+                        //xqs5040DServoHoles(10,3);
+                        minkowski(){
+                            xqs5040DServoBody();
+                            sphere(1);
+                        }
+                    }
                 }
+                translate([0,0,5+25/2])
+                    radialHoles(200,4/2);
             }
+            translate([65,0,0])
+                rotate([0,0,90])
+                    xqs5040DServoHoles(8.5,2.75);
+            translate([33,-30,0])
+                rotate([0,0,0])
+                    cube([45,5, 30]);
+            
+            translate([33,55,0])
+                rotate([0,0,0])
+                    cube([45,5, 30]);
+            translate([33,60,0])
+                rotate([0,0,180+45])
+                    cube([26,5, 30]);
         }
-        translate([0,0,5+25/2])
-            radialHoles(200,4/2);
+        translate([65,0,0])
+                rotate([0,0,90])
+                    xqs5040DServoHoles(10,1.6);
     }
 }
 
@@ -334,9 +354,9 @@ module checkGeometry(){
 
 //checkGeometry();
 
-//printServoMount();
+printServoMount();
 //printRotor();
-printStator();
+//printStator();
 //printServoPulley();
 
 //servoPulley();
