@@ -21,9 +21,12 @@ uint8_t writeRegister(uint8_t devAddr, uint8_t regAddr, uint8_t regData){
 }
 
 uint8_t readManyRegisters(char *buf, uint8_t devAddr, uint8_t startReg, uint8_t n){
+	uint8_t status;
 	Wire.beginTransmission(devAddr);
 	Wire.write(startReg);
-	Wire.endTransmission();
+	status = Wire.endTransmission();
+	if(status)
+		return status;
 
 	Wire.requestFrom(devAddr, n);
 	while(Wire.available() < n){

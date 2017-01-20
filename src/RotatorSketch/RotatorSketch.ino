@@ -3,7 +3,9 @@
 #include <Wire.h>
 #include "lsm303.h"
 #include "l3gd20.h"
+#include "bmp180.h"
 #include "i2c.h"
+
 
 extern "C"
 {
@@ -35,7 +37,8 @@ const CorbomiteEntry * const entries[] PROGMEM = {
 
 } //extern "C"
 Servo rotserv;
-
+calibrationCoefficient_t cal;
+calibrationCoefficient_t cal2;
 void printValue(char *name, float value)
 {
   Serial.print(name);
@@ -44,19 +47,19 @@ void printValue(char *name, float value)
   Serial.print(value);
 }
 
-void setup()
-{
-  uint8_t whoami;
-  Wire.begin();
-  Serial.begin(115200);
-  rotserv.attach(9);
-  initLsm303(0x1D);
-  initL3gd20(0x6B);
-  Serial.print("whoamireg has value ");
-  Serial.print(whoami, HEX);
-  Serial.println("");
 
-
+void printHex(char *buf, uint16_t n){
+	uint8_t b=0;
+	while(n--){
+		b++;
+		Serial.print((uint8_t)*buf++, HEX);
+		if(b%4 == 0)
+			Serial.print(" ");
+		if(b == 8){
+			b = 0;
+			Serial.println("");
+		}
+	}
 }
 
 void print3(vector3 d){
@@ -65,11 +68,39 @@ void print3(vector3 d){
 	Serial.print(" Z: ") ; Serial.print(d.z);
 }
 
+void setup()
+{
+  Wire.begin();
+  Serial.begin(115200);
+  rotserv.attach(9);
+  initLsm303(0x1D);
+  initL3gd20(0x6B);
+  Serial.print("BMP180 init status "), Serial.println(initBmp180(0x77, &cal));
+  Serial.print("BMP180 init status2 "), Serial.println(initBmp180(0x77, &cal2));
+cal.ac1=0xbeef;
+  Serial.print("whoamireg has value ");
+  Serial.print(readWhoAmI(0x6b), HEX);
+  Serial.println("");
+  printValue("Pointer", (int)&cal);
+  printValue("Pointer", (int)&cal2);
+  printHex((char *)&cal, 22);
+  printHex((char *)&cal2, 22);
+  for(int i = 0; i < 22; i++){
+	Serial.print(readRegister(0x77, 0xAA+i));
+	Serial.print(" ");
+  }
+}
+
 void loop()
 { 
 	vector3 d;
-	
-	if(readMagnetometerData(0x1d, &d) == 0){
+
+
+	Serial.print("Temperature "); Serial.print(readTemperatureUncal(0x77));	
+	delay(10);
+//	Serial.print("Pressure "); Serial.print(readPressureUncal(0x77, 0));	
+	Serial.println("");
+	/*if(readMagnetometerData(0x1d, &d) == 0){
 		Serial.print("Magnetometer "); print3(d);
 		//Serial.println("");
 	}
@@ -80,7 +111,7 @@ void loop()
 	if(readGyroData(0x6b, &d) == 0){
 		Serial.print("gyro "); print3(d);
 		Serial.println("");
-	}
+	}*/
 	/*Serial.print("status register 0x");
 	Serial.print(readRegister(0x6b, 0x27), HEX);
 	Serial.println("");
