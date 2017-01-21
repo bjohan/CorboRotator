@@ -1,4 +1,91 @@
 include <publicDomainGearV1.1.scad>
+//use <ElectronicModuleAssembly/modules/rotorFixture.scad>
+
+use <ElectronicModuleAssembly/modules/shelf.scad>
+use <ElectronicModuleAssembly/modules/dk-nano-003.scad>
+use <ElectronicModuleAssembly/modules/jy-mcy-bt-board-v105.scad>
+use <ElectronicModuleAssembly/modules/dsn-dvm-368.scad>
+use <ElectronicModuleAssembly/modules/gy-89.scad>
+
+dkNanoPos=[10, 0, 5];
+btPos=[65, 0, 5];
+dispPos = [45,40,5];
+sensPos = [15,40,5];
+
+module electronics1FixtureBody(){
+    shelfModuleEven(85, 60, 30, 2, 3/2);
+    translate(dkNanoPos)
+        dkNano003Fixture(3/2, 5);
+    translate(btPos)
+        jyMcuBtBoardV105Fixture(3/2, 5);
+    /*translate(dispPos)
+        dsnDvm368Fixture(3/2, 5);
+    translate(sensPos)
+        gy89Fixture(3/2, 5);*/
+}
+
+module electronics1FixtureModules(){
+    translate(dkNanoPos)
+        dkNano003Module(3/2, 5);
+    translate(btPos)
+        jyMcuBtBoardV105Module(3/2, 5);
+    /*translate(dispPos)
+        dsnDvm368Module(3/2, 5);
+    translate(sensPos)
+        gy89Module(3/2, 5);*/
+}
+
+module electronics1FixtureHolePattern(h){
+    translate(dkNanoPos)
+        dkNano003HolePattern(3/2, h);
+    translate(btPos)
+        jyMcuBtBoardV105HolePattern(3/2, h);
+    /*translate(dispPos)
+        dsnDvm368HolePattern(3/2, h);
+    translate(sensPos)
+        gy89HolePattern(3/2, h);*/
+}
+
+module electronics1FixtureModule(){
+    difference(){
+        electronics1FixtureBody();
+        translate([0,0,-20])
+            electronics1FixtureHolePattern(60);
+    }
+}
+
+module electronics2FixtureBody(){
+    shelfModuleOdd(85, 60, 10, 2, 3/2);
+    translate(dispPos)
+        dsnDvm368Fixture(3/2, 5);
+    translate(sensPos)
+        gy89Fixture(3/2, 5);
+}
+
+module electronics2FixtureModules(){
+    translate(dispPos)
+        dsnDvm368Module(3/2, 5);
+    translate(sensPos)
+        gy89Module(3/2, 5);
+}
+
+module electronics2FixtureHolePattern(h){
+    translate(dispPos)
+        dsnDvm368HolePattern(3/2, h);
+    translate(sensPos)
+        gy89HolePattern(3/2, h);
+}
+
+module electronics2FixtureModule(){
+    difference(){
+        electronics2FixtureBody();
+        translate([0,0,-20])
+            electronics2FixtureHolePattern(60);
+    }
+}
+
+
+
 module xqs5040DServoHoles(h,r){
         translate([-15,0,0]){
             translate([-1.5-3, 11/2+3])
@@ -177,9 +264,9 @@ module servoPlate(t){
                 cylinder(t, cr, cr);
             translate([70,50,0])
                 cylinder(t, cr, cr);
-            translate([-80, -30, 0])
+            translate([-100, -30, 0])
                 cylinder(t, cr, cr);
-            translate([-80, 50, 0])
+            translate([-100, 50, 0])
                 cylinder(t, cr, cr);
         }
         cylinder(t, mastRad+t*2, mastRad+t*2);
@@ -257,7 +344,9 @@ module rotorPlaced(){
 
 module servoMountPlaced(){
     translate([0,0,51]){
-        servoMount();
+        servoMountWithElectronics();
+        electronics1Placed();
+        electronics2Placed();
     }
 }
 
@@ -303,7 +392,7 @@ module servoPulleyPlaced(){
 
 
 module printServoMount(){
-    servoMount();
+    servoMountWithElectronics();
 }
 
 module printRotor(){
@@ -353,9 +442,60 @@ module checkGeometry(){
     }
 }
 
+module servoMountWithElectronics(){
+    servoMount();
+    translate([-50, 63, 5]){
+        rotate([90,0,-90]){
+            shelfModuleOdd(85, 60, 0, 10, 3/2);
+            /*translate([0, 0, 15])
+                electronics1FixtureModule();
+            translate([0, 0, 50]){
+                electronics2FixtureModule();
+            }*/
+        }
+    }
+}
+
+module electronics1Placed(){
+    servoMount();
+    translate([-50, 63, 5]){
+        rotate([90,0,-90]){
+            shelfModuleOdd(85, 60, 0, 10, 3/2);
+            translate([0, 0, 10])
+                electronics1FixtureModule();
+        }
+    }
+}
+
+module electronics2Placed(){
+    servoMount();
+    translate([-50, 63, 5]){
+        rotate([90,0,-90]){
+            shelfModuleOdd(85, 60, 0, 10, 3/2);
+            translate([0, 0, 40]){
+                electronics2FixtureModule();
+            }
+        }
+    }
+}
+
+
+module printElectronics1FixtureModule(){
+    electronics1FixtureModule();
+}
+
+module printElectronics2FixtureModule(){
+    electronics2FixtureModule();
+}
+
+//printElectronics2FixtureModule();
+
+//servoMountWithElectronics();
+//electronics1Placed();
+//electronics2Placed();
 //checkGeometry();
 
-printServoMount();
+//printServoMount();
 //printRotor();
 //printStator();
 //printServoPulley();
