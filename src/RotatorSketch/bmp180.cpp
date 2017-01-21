@@ -1,7 +1,7 @@
 #include "lsm303.h"
 #include "i2c.h"
 #include "bmp180.h"
-#include <Servo.h>
+#include <Arduino.h>
 int8_t readPressure(uint8_t devAddr, vector3 *out){
 	if(readManyRegisters((char *) out, devAddr, 0x28|(1<<7), 6)!=0){
 		return -1;
@@ -12,18 +12,20 @@ int8_t readPressure(uint8_t devAddr, vector3 *out){
 int16_t readTemperatureUncal(uint8_t devAddr){
 	int16_t t;
 	writeRegister(devAddr, 0xf4, 0x2e);
-	readManyRegisters(((char *) &t)+1, devAddr, 0xf6, 2);
+	delay(5);
+	readManyRegisters(((char *) &t), devAddr, 0xf6, 2);
 	return t;
 }
 
 int32_t readPressureUncal(uint8_t devAddr, uint8_t oss){
 	int32_t t;
 	writeRegister(devAddr, 0xf4, 0x2e|(oss<<6));
-	readManyRegisters(((char *)&t)+1, devAddr, 0xf6, 3);
+	delay(5);
+	readManyRegisters(((char *)&t), devAddr, 0xf6, 3);
 
 	//sign extend if needed
-	if( ((char*)&t)[2]&0x80)
-		((char*)&t)[3]=0xff;
+	if( ((char*)&t)[3]&0x80)
+		((char*)&t)[4]=0xff;
 	return t;
 }
 

@@ -23,6 +23,20 @@ void setServoPower(int32_t d){ servoPower=d; }
 
 ANA_OUT("Servo_power", "%", "0", "100", 0, 255, setServoPower ,setServoPowerWidget);
 
+ANA_IN("Accelerometer_X", "g", "-2", "2", -32768, 32767, accelerometerX);
+ANA_IN("Accelerometer_Y", "g", "-2", "2", -32768, 32767, accelerometerY);
+ANA_IN("Accelerometer_Z", "g", "-2", "2", -32768, 32767, accelerometerZ);
+
+ANA_IN("Magnetometer_X", "gauss", "-1.3", "1.3", -32768, 32767, magnetometerX);
+ANA_IN("Magnetometer_Y", "gauss", "-1.3", "1.3", -32768, 32767, magnetometerY);
+ANA_IN("Magnetometer_Z", "gauss", "-1.3", "1.3", -32768, 32767, magnetometerZ);
+
+ANA_IN("Gyro_X", "deg/s", "-125", "125", -32768, 32767, gyroX);
+ANA_IN("Gyro_Y", "deg/s", "-125", "125", -32768, 32767, gyroY);
+ANA_IN("Gyro_Z", "deg/s", "-125", "125", -32768, 32767, gyroZ);
+
+ANA_IN("Temperature", "C", "-128", "127", -128, 127, temperature);
+ANA_IN("Pressure", "pa", "-128", "127", -128, 127, pressure);
 
 const CorbomiteEntry last PROGMEM = {LASTTYPE, "", 0};
 const EventData initEvent PROGMEM = {registeredEntries};
@@ -32,6 +46,17 @@ const CorbomiteEntry initcmd PROGMEM =
 
 const CorbomiteEntry * const entries[] PROGMEM = {
 	&setServoPowerWidget,
+	&accelerometerX,
+	&accelerometerY,
+	&accelerometerZ,
+	&magnetometerX,
+	&magnetometerY,
+	&magnetometerZ,
+	&gyroX,
+	&gyroY,
+	&gyroZ,
+	&temperature,
+	&pressure,
 	&initcmd, &last
 };
 
@@ -75,31 +100,35 @@ void setup()
   rotserv.attach(9);
   initLsm303(0x1D);
   initL3gd20(0x6B);
-  Serial.print("BMP180 init status "), Serial.println(initBmp180(0x77, &cal));
-  Serial.print("BMP180 init status2 "), Serial.println(initBmp180(0x77, &cal2));
-cal.ac1=0xbeef;
-  Serial.print("whoamireg has value ");
-  Serial.print(readWhoAmI(0x6b), HEX);
-  Serial.println("");
-  printValue("Pointer", (int)&cal);
-  printValue("Pointer", (int)&cal2);
-  printHex((char *)&cal, 22);
-  printHex((char *)&cal2, 22);
-  for(int i = 0; i < 22; i++){
-	Serial.print(readRegister(0x77, 0xAA+i));
-	Serial.print(" ");
-  }
+  initBmp180(0x77, &cal);
 }
 
 void loop()
 { 
 	vector3 d;
+	int16_t temp;
 
+	if(readAccelerometerData(0x1d, &d) == 0){
+		transmitAnalogIn(&accelerometerX, d.x);
+		transmitAnalogIn(&accelerometerY, d.y);
+		transmitAnalogIn(&accelerometerZ, d.z);
+	}
 
-	Serial.print("Temperature "); Serial.print(readTemperatureUncal(0x77));	
-	delay(10);
-//	Serial.print("Pressure "); Serial.print(readPressureUncal(0x77, 0));	
-	Serial.println("");
+	if(readMagnetometerData(0x1d, &d) == 0){
+		transmitAnalogIn(&magnetometerX, d.x);
+		transmitAnalogIn(&magnetometerY, d.y);
+		transmitAnalogIn(&magnetometerZ, d.z);
+	}
+
+	if(readGyroData(0x6b, &d) == 0){
+		transmitAnalogIn(&gyroX, d.x);
+		transmitAnalogIn(&gyroY, d.y);
+		transmitAnalogIn(&gyroZ, d.z);
+	}
+
+	transmitAnalogIn(&temperature, readTemperatureUncal(0x77));
+	transmitAnalogIn(&pressure, readPressureUncal(0x77,0));
+
 	/*if(readMagnetometerData(0x1d, &d) == 0){
 		Serial.print("Magnetometer "); print3(d);
 		//Serial.println("");

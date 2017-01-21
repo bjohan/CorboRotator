@@ -15,11 +15,20 @@ uint8_t readMagnetometerData(uint8_t devAddr, vector3 *out){
  	return 0;
 }
 
+uint8_t readTemperatureLsm303(uint8_t devAddr, int16_t *data){
+	if(readManyRegisters((char *) data, devAddr, 0x31|(1<<7), 2)!=0){
+		return -1;
+	}
+ 	return 0;
+}
+
 void initLsm303(uint8_t devAddr){
 	writeRegister(devAddr, 0x21, 0x00);
 	writeRegister(devAddr, 0x20, 0x57);
+	writeRegister(devAddr, 0x23, 0xc0);
 	writeRegister(devAddr, 0x24, 0x64);
 	writeRegister(devAddr, 0x25, 0x20);
 	writeRegister(devAddr, 0x26, 0x00);
+	writeRegister(devAddr, 0x00, 0x9b);
 }
 
