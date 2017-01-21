@@ -169,17 +169,18 @@ module statorGear(){
 }
 
 module servoPlate(t){
+    cr = 20;
     difference(){
         hull(){
             cylinder(t, mastRad+t*3, mastRad+t*3);
-            translate([70,-20,0])
-                cylinder(t, 15, 15);
+            translate([70,-30,0])
+                cylinder(t, cr, cr);
             translate([70,50,0])
-                cylinder(t, 15, 15);
-            translate([-50, -45, 0])
-                cylinder(t, 15, 15);
-            translate([-50, 45, 0])
-                cylinder(t, 15, 15);
+                cylinder(t, cr, cr);
+            translate([-80, -30, 0])
+                cylinder(t, cr, cr);
+            translate([-80, 50, 0])
+                cylinder(t, cr, cr);
         }
         cylinder(t, mastRad+t*2, mastRad+t*2);
     }
