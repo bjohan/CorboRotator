@@ -264,9 +264,9 @@ module servoPlate(t){
                 cylinder(t, cr, cr);
             translate([70,50,0])
                 cylinder(t, cr, cr);
-            translate([-100, -30, 0])
+            translate([-45, -30, 0])
                 cylinder(t, cr, cr);
-            translate([-100, 50, 0])
+            translate([-45, 50, 0])
                 cylinder(t, cr, cr);
         }
         cylinder(t, mastRad+t*2, mastRad+t*2);
@@ -444,7 +444,7 @@ module checkGeometry(){
 
 module servoMountWithElectronics(){
     servoMount();
-    translate([-50, 63, 5]){
+    translate([-42, 63, 5]){
         rotate([90,0,-90]){
             shelfModuleOdd(85, 60, 0, 10, 3/2);
             /*translate([0, 0, 15])
@@ -488,8 +488,9 @@ module printElectronics2FixtureModule(){
     electronics2FixtureModule();
 }
 
-//printElectronics2FixtureModule();
-
+printElectronics1FixtureModule();
+translate([0,70,0])
+printElectronics2FixtureModule();
 //servoMountWithElectronics();
 //electronics1Placed();
 //electronics2Placed();

@@ -126,7 +126,7 @@ void loop()
 		transmitAnalogIn(&gyroZ, d.z);
 	}
 
-	transmitAnalogIn(&temperature, readTemperatureUncal(0x77));
+	transmitAnalogIn(&temperature, compensateTemperature(readTemperatureUncal(0x77), &cal));
 	transmitAnalogIn(&pressure, readPressureUncal(0x77,0));
 
 	/*if(readMagnetometerData(0x1d, &d) == 0){

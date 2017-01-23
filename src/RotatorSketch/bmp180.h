@@ -10,13 +10,14 @@ typedef struct{
 	uint16_t ac6;
 	int16_t b1;
 	int16_t b2;
-	int16_t ma;
 	int16_t mb;
 	int16_t mc;
+	int16_t md;
 } calibrationCoefficient_t;
 
 int8_t readPressure(uint8_t devAddr, vector3 *out);
 int16_t initBmp180(uint8_t devAddr, calibrationCoefficient_t *cal);
 int16_t readTemperatureUncal(uint8_t devAddr);
+int32_t compensateTemperature(int16_t temperature, calibrationCoefficient_t *cal);
 int32_t readPressureUncal(uint8_t devAddr, uint8_t oss);
 
