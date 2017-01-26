@@ -16,13 +16,17 @@ extern "C"
 
 
 uint8_t servoPower = 0;
+uint8_t servoEnabled = 0;
+uint8_t lastServoEnabled = 0;
 
 extern "C" {
 
-void setServoPower(int32_t d){ servoPower=d; }
+void setServoPower(int32_t d){ servoPower=d;}
+void setServoEnabled(uint8_t d){servoEnabled=d;}
 
 ANA_OUT("Servo_power", "%", "0", "100", 0, 255, setServoPower ,setServoPowerWidget);
-
+DIG_OUT("Servo_enabled", setServoEnabled, servoEnabledWidget);
+DIG_IN("Servo_status", servoStatusWidget);
 ANA_IN("Accelerometer_X", "g", "-2", "2", -32768, 32767, accelerometerX);
 ANA_IN("Accelerometer_Y", "g", "-2", "2", -32768, 32767, accelerometerY);
 ANA_IN("Accelerometer_Z", "g", "-2", "2", -32768, 32767, accelerometerZ);
@@ -46,6 +50,8 @@ const CorbomiteEntry initcmd PROGMEM =
 
 const CorbomiteEntry * const entries[] PROGMEM = {
 	&setServoPowerWidget,
+	&servoEnabledWidget,
+	&servoStatusWidget,
 	&accelerometerX,
 	&accelerometerY,
 	&accelerometerZ,
@@ -95,6 +101,8 @@ void print3(vector3 d){
 
 void setup()
 {
+  pinMode(12, OUTPUT);
+  pinMode(LED_BUILTIN, OUTPUT);
   Wire.begin();
   Serial.begin(115200);
   rotserv.attach(9);
@@ -107,6 +115,15 @@ void loop()
 { 
 	vector3 d;
 	int16_t temp;
+
+	if(servoEnabled){
+		digitalWrite(LED_BUILTIN, HIGH);
+		rotserv.write(servoPower);
+		digitalWrite(12, HIGH);
+	} else {
+		digitalWrite(LED_BUILTIN, LOW);
+		digitalWrite(12, LOW);
+	}
 
 	if(readAccelerometerData(0x1d, &d) == 0){
 		transmitAnalogIn(&accelerometerX, d.x);
@@ -127,7 +144,7 @@ void loop()
 	}
 
 	transmitAnalogIn(&temperature, compensateTemperature(readTemperatureUncal(0x77), &cal));
-	transmitAnalogIn(&pressure, readPressureUncal(0x77,0));
+	//transmitAnalogIn(&pressure, readPressureUncal(0x77,0));
 
 	/*if(readMagnetometerData(0x1d, &d) == 0){
 		Serial.print("Magnetometer "); print3(d);
@@ -155,12 +172,15 @@ void loop()
 	//BMP180 0x77 Pressure sensor
 	//L3GD20 0x6B Gyro
 	//0x1D, 0x6B 0x77
+	//if(servoEnabled)
+	//    	rotserv.write(servoPower);
+	//else
+	//	rotserv.writeMicroseconds(0);
 	commandLine();
 }
 
 void platformSerialWrite(const char *buf, uint16_t len)
 {
-    rotserv.write(servoPower);
     Serial.write((uint8_t *)buf, len);
 }
 
