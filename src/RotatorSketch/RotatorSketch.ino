@@ -31,7 +31,7 @@ ANA_OUT("Servo_power", "%", "0", "100", 0, 255, setServoPower,setServoPowerWidge
 ANA_OUT("Azimuth", "deg", "-180", "180", -32768, 32767, setAzimuth, setAzimuthWidget);
 ANA_IN("Azi_delta", "deg", "-180", "180", -32768, 32767, azimuthDelta);
 DIG_OUT("Servo_enabled", setServoEnabled, servoEnabledWidget);
-DIG_IN("Servo_status", servoStatusWidget);
+DIG_IN("Servo_direction", servoDirectionWidget);
 ANA_IN("Accelerometer_X", "g", "-2", "2", -32768, 32767, accelerometerX);
 ANA_IN("Accelerometer_Y", "g", "-2", "2", -32768, 32767, accelerometerY);
 ANA_IN("Accelerometer_Z", "g", "-2", "2", -32768, 32767, accelerometerZ);
@@ -39,7 +39,7 @@ ANA_IN("Accelerometer_Z", "g", "-2", "2", -32768, 32767, accelerometerZ);
 ANA_IN("Magnetometer_X", "gauss", "-1.3", "1.3", -32768, 32767, magnetometerX);
 ANA_IN("Magnetometer_Y", "gauss", "-1.3", "1.3", -32768, 32767, magnetometerY);
 ANA_IN("Magnetometer_Z", "gauss", "-1.3", "1.3", -32768, 32767, magnetometerZ);
-ANA_IN("Magnetic_azimuth", "rad", "-3.1415", "3.1415", -32768, 32767, magneticAzimuth);
+ANA_IN("Magnetic_azimuth", "deg", "-180", "180", -32768, 32767, magneticAzimuth);
 ANA_IN("Gyro_X", "deg/s", "-125", "125", -32768, 32767, gyroX);
 ANA_IN("Gyro_Y", "deg/s", "-125", "125", -32768, 32767, gyroY);
 ANA_IN("Gyro_Z", "deg/s", "-125", "125", -32768, 32767, gyroZ);
@@ -58,7 +58,7 @@ const CorbomiteEntry * const entries[] PROGMEM = {
 	&setAzimuthWidget,
 	&azimuthDelta,
 	&servoEnabledWidget,
-	&servoStatusWidget,
+	&servoDirectionWidget,
 	&accelerometerX,
 	&accelerometerY,
 	&accelerometerZ,
@@ -151,13 +151,16 @@ void loop()
 		transmitAnalogIn(&gyroZ, d.z);
 	}
 	
-	if(servoEnabled){
+	if(servoEnabled && (abs(aziDelta) > 0x0200)){
 		digitalWrite(LED_BUILTIN, HIGH);
 		//rotserv.write(servoPower);
-		if(aziDelta<0)
-			rotserv.write(35);
-		else
-			rotserv.write(34);
+		if(aziDelta<0){
+			rotserv.write(90);
+			transmitDigitalIn(&servoDirectionWidget,1);
+		}else{
+			rotserv.write(86);
+			transmitDigitalIn(&servoDirectionWidget,0);
+		}
 		digitalWrite(12, HIGH);
 	} else {
 		digitalWrite(LED_BUILTIN, LOW);
