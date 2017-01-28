@@ -5,7 +5,7 @@
 #include "l3gd20.h"
 #include "bmp180.h"
 #include "i2c.h"
-
+#include "math.h"
 
 extern "C"
 {
@@ -18,13 +18,18 @@ extern "C"
 uint8_t servoPower = 0;
 uint8_t servoEnabled = 0;
 uint8_t lastServoEnabled = 0;
+uint16_t azimuth = 0;
+
 
 extern "C" {
 
 void setServoPower(int32_t d){ servoPower=d;}
 void setServoEnabled(uint8_t d){servoEnabled=d;}
+void setAzimuth(int32_t a){azimuth=a;};
 
-ANA_OUT("Servo_power", "%", "0", "100", 0, 255, setServoPower ,setServoPowerWidget);
+ANA_OUT("Servo_power", "%", "0", "100", 0, 255, setServoPower,setServoPowerWidget);
+ANA_OUT("Azimuth", "deg", "-180", "180", -32768, 32767, setAzimuth, setAzimuthWidget);
+ANA_IN("Azi_delta", "deg", "-180", "180", -32768, 32767, azimuthDelta);
 DIG_OUT("Servo_enabled", setServoEnabled, servoEnabledWidget);
 DIG_IN("Servo_status", servoStatusWidget);
 ANA_IN("Accelerometer_X", "g", "-2", "2", -32768, 32767, accelerometerX);
@@ -34,7 +39,7 @@ ANA_IN("Accelerometer_Z", "g", "-2", "2", -32768, 32767, accelerometerZ);
 ANA_IN("Magnetometer_X", "gauss", "-1.3", "1.3", -32768, 32767, magnetometerX);
 ANA_IN("Magnetometer_Y", "gauss", "-1.3", "1.3", -32768, 32767, magnetometerY);
 ANA_IN("Magnetometer_Z", "gauss", "-1.3", "1.3", -32768, 32767, magnetometerZ);
-
+ANA_IN("Magnetic_azimuth", "rad", "-3.1415", "3.1415", -32768, 32767, magneticAzimuth);
 ANA_IN("Gyro_X", "deg/s", "-125", "125", -32768, 32767, gyroX);
 ANA_IN("Gyro_Y", "deg/s", "-125", "125", -32768, 32767, gyroY);
 ANA_IN("Gyro_Z", "deg/s", "-125", "125", -32768, 32767, gyroZ);
@@ -50,6 +55,8 @@ const CorbomiteEntry initcmd PROGMEM =
 
 const CorbomiteEntry * const entries[] PROGMEM = {
 	&setServoPowerWidget,
+	&setAzimuthWidget,
+	&azimuthDelta,
 	&servoEnabledWidget,
 	&servoStatusWidget,
 	&accelerometerX,
@@ -58,6 +65,7 @@ const CorbomiteEntry * const entries[] PROGMEM = {
 	&magnetometerX,
 	&magnetometerY,
 	&magnetometerZ,
+	&magneticAzimuth,
 	&gyroX,
 	&gyroY,
 	&gyroZ,
@@ -115,15 +123,10 @@ void loop()
 { 
 	vector3 d;
 	int16_t temp;
+	float magAzf;
+	int16_t magAzi;
+	int16_t aziDelta;
 
-	if(servoEnabled){
-		digitalWrite(LED_BUILTIN, HIGH);
-		rotserv.write(servoPower);
-		digitalWrite(12, HIGH);
-	} else {
-		digitalWrite(LED_BUILTIN, LOW);
-		digitalWrite(12, LOW);
-	}
 
 	if(readAccelerometerData(0x1d, &d) == 0){
 		transmitAnalogIn(&accelerometerX, d.x);
@@ -135,6 +138,11 @@ void loop()
 		transmitAnalogIn(&magnetometerX, d.x);
 		transmitAnalogIn(&magnetometerY, d.y);
 		transmitAnalogIn(&magnetometerZ, d.z);
+		magAzf = atan2(d.x, d.z);
+		magAzi = int(32767.0*magAzf/3.141529);
+		transmitAnalogIn(&magneticAzimuth, magAzi);
+		aziDelta = magAzi-azimuth;
+		transmitAnalogIn(&azimuthDelta, aziDelta);
 	}
 
 	if(readGyroData(0x6b, &d) == 0){
@@ -142,40 +150,21 @@ void loop()
 		transmitAnalogIn(&gyroY, d.y);
 		transmitAnalogIn(&gyroZ, d.z);
 	}
+	
+	if(servoEnabled){
+		digitalWrite(LED_BUILTIN, HIGH);
+		//rotserv.write(servoPower);
+		if(aziDelta<0)
+			rotserv.write(35);
+		else
+			rotserv.write(34);
+		digitalWrite(12, HIGH);
+	} else {
+		digitalWrite(LED_BUILTIN, LOW);
+		digitalWrite(12, LOW);
+	}
 
 	transmitAnalogIn(&temperature, compensateTemperature(readTemperatureUncal(0x77), &cal));
-	//transmitAnalogIn(&pressure, readPressureUncal(0x77,0));
-
-	/*if(readMagnetometerData(0x1d, &d) == 0){
-		Serial.print("Magnetometer "); print3(d);
-		//Serial.println("");
-	}
-	if(readAccelerometerData(0x1d, &d) == 0){
-		Serial.print("Accelerometer "); print3(d);
-		//Serial.println("");
-	}
-	if(readGyroData(0x6b, &d) == 0){
-		Serial.print("gyro "); print3(d);
-		Serial.println("");
-	}*/
-	/*Serial.print("status register 0x");
-	Serial.print(readRegister(0x6b, 0x27), HEX);
-	Serial.println("");
-	Serial.print("temp register 0x");
-	Serial.print(readRegister(0x6b, 0x26), HEX);
-	Serial.println("");
-	Serial.print("ctl1 register 0x");
-	Serial.print(readRegister(0x6b, 0x20), HEX);
-	Serial.println("");*/
-	//delay(200);
-	//LSM303D 0x1D Accelerometer and magnetometer
-	//BMP180 0x77 Pressure sensor
-	//L3GD20 0x6B Gyro
-	//0x1D, 0x6B 0x77
-	//if(servoEnabled)
-	//    	rotserv.write(servoPower);
-	//else
-	//	rotserv.writeMicroseconds(0);
 	commandLine();
 }
 
