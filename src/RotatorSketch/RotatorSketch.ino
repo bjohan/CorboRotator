@@ -121,7 +121,7 @@ void setup()
   pinMode(12, OUTPUT);
   pinMode(LED_BUILTIN, OUTPUT);
   Wire.begin();
-  Serial.begin(115200);
+  Serial.begin(9600);
   rotserv.attach(9);
   initLsm303(0x1D);
   initL3gd20(0x6B);
@@ -129,8 +129,9 @@ void setup()
 }
 
 void loop()
-{ 
-	vector3 d;
+{
+	static uint8_t txnum = 0; 
+	vector3 mag, gyr, acc;
 	int16_t temp;
 	float magAzf;
 	int16_t magAzi;
@@ -139,31 +140,20 @@ void loop()
 	static bool servoEnabledLast = false;
 	static iir_state_int16_t fil{0, 0xfff};
 
-	if(readAccelerometerData(0x1d, &d) == 0){
-		transmitAnalogIn(&accelerometerX, d.x);
-		transmitAnalogIn(&accelerometerY, d.y);
-		transmitAnalogIn(&accelerometerZ, d.z);
+	if(readAccelerometerData(0x1d, &acc) == 0){
 	}
 
-	if(readMagnetometerData(0x1d, &d) == 0){
-		transmitAnalogIn(&magnetometerX, d.x);
-		transmitAnalogIn(&magnetometerY, d.y);
-		transmitAnalogIn(&magnetometerZ, d.z);
-		magAzf = atan2(d.x, d.z);
+	if(readMagnetometerData(0x1d, &mag) == 0){
+		magAzf = atan2(mag.x, mag.z);
 		magAzi = int(32767.0*magAzf/3.141529);
-		transmitAnalogIn(&magneticAzimuth, magAzi);
 		aziDelta = magAzi-azimuth;
 		if(abs(aziDelta) > abs(azimuth-magAzi))
 			aziDelta = azimuth-magAzi;
 		filter(&fil, aziDelta);
 		aziDelta = fil.value;
-		transmitAnalogIn(&azimuthDelta, aziDelta);
 	}
 
-	if(readGyroData(0x6b, &d) == 0){
-		transmitAnalogIn(&gyroX, d.x);
-		transmitAnalogIn(&gyroY, d.y);
-		transmitAnalogIn(&gyroZ, d.z);
+	if(readGyroData(0x6b, &gyr) == 0){
 	}
 	
 	if(servoEnabled && (abs(aziDelta) > 0x0100)){
@@ -191,8 +181,23 @@ void loop()
 		digitalWrite(12, LOW);
 		servoEnabledLast = false;
 	}
-
-	transmitAnalogIn(&temperature, compensateTemperature(readTemperatureUncal(0x77), &cal));
+	switch(txnum++){
+		case 0:	transmitAnalogIn(&accelerometerX, acc.x); break;
+		case 1: transmitAnalogIn(&accelerometerY, acc.y); break;
+		case 2: transmitAnalogIn(&accelerometerZ, acc.z); break;
+		case 3: transmitAnalogIn(&magnetometerX, mag.x); break;
+		case 4: transmitAnalogIn(&magnetometerY, mag.y); break;
+		case 5: transmitAnalogIn(&magnetometerZ, mag.z); break;
+		case 6: transmitAnalogIn(&magneticAzimuth, magAzi); break;
+		case 7: transmitAnalogIn(&azimuthDelta, aziDelta); break;
+		case 8: transmitAnalogIn(&gyroX, gyr.x); break;
+		case 9: transmitAnalogIn(&gyroY, gyr.y); break;
+		case 10: transmitAnalogIn(&gyroZ, gyr.z); break;
+		case 11: transmitAnalogIn(&temperature, compensateTemperature(readTemperatureUncal(0x77), &cal)); txnum = 0;break;
+		default:
+			txnum = 0;
+		break;
+	}
 	commandLine();
 }
 
