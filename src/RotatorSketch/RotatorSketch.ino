@@ -13,7 +13,10 @@ extern "C"
 #include "corbomite.h"
 }
 
-
+typedef struct{
+	int16_t value;
+	int16_t a;
+} iir_state_int16_t;
 
 uint8_t servoPower = 0;
 uint8_t servoEnabled = 0;
@@ -78,6 +81,7 @@ const CorbomiteEntry * const entries[] PROGMEM = {
 Servo rotserv;
 calibrationCoefficient_t cal;
 calibrationCoefficient_t cal2;
+
 void printValue(char *name, float value)
 {
   Serial.print(name);
@@ -107,6 +111,11 @@ void print3(vector3 d){
 	Serial.print(" Z: ") ; Serial.print(d.z);
 }
 
+void filter(iir_state_int16_t *fil, int16_t value){
+	int32_t n = int32_t(fil->value)*(0x7fff-int32_t(fil->a))+int32_t(value)*int32_t(fil->a);
+	fil->value = n >> 15;
+}
+
 void setup()
 {
   pinMode(12, OUTPUT);
@@ -126,7 +135,9 @@ void loop()
 	float magAzf;
 	int16_t magAzi;
 	int16_t aziDelta;
-
+	int16_t vel;
+	static bool servoEnabledLast = false;
+	static iir_state_int16_t fil{0, 0xfff};
 
 	if(readAccelerometerData(0x1d, &d) == 0){
 		transmitAnalogIn(&accelerometerX, d.x);
@@ -142,6 +153,10 @@ void loop()
 		magAzi = int(32767.0*magAzf/3.141529);
 		transmitAnalogIn(&magneticAzimuth, magAzi);
 		aziDelta = magAzi-azimuth;
+		if(abs(aziDelta) > abs(azimuth-magAzi))
+			aziDelta = azimuth-magAzi;
+		filter(&fil, aziDelta);
+		aziDelta = fil.value;
 		transmitAnalogIn(&azimuthDelta, aziDelta);
 	}
 
@@ -151,20 +166,30 @@ void loop()
 		transmitAnalogIn(&gyroZ, d.z);
 	}
 	
-	if(servoEnabled && (abs(aziDelta) > 0x0200)){
+	if(servoEnabled && (abs(aziDelta) > 0x0100)){
+		if(not servoEnabledLast)
+			rotserv.attach(9);
 		digitalWrite(LED_BUILTIN, HIGH);
-		//rotserv.write(servoPower);
+		//rotserv.write(88);
+		vel=abs(aziDelta/870)+1;
+
 		if(aziDelta<0){
-			rotserv.write(90);
+			rotserv.write(88+vel);
+			//rotserv.write(90);
 			transmitDigitalIn(&servoDirectionWidget,1);
 		}else{
-			rotserv.write(86);
+			rotserv.write(88-vel);
+			//rotserv.write(86);
 			transmitDigitalIn(&servoDirectionWidget,0);
 		}
 		digitalWrite(12, HIGH);
+		servoEnabledLast = true;
 	} else {
+		if(servoEnabledLast)
+			rotserv.detach();
 		digitalWrite(LED_BUILTIN, LOW);
 		digitalWrite(12, LOW);
+		servoEnabledLast = false;
 	}
 
 	transmitAnalogIn(&temperature, compensateTemperature(readTemperatureUncal(0x77), &cal));
