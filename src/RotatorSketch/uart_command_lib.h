@@ -41,4 +41,5 @@ int main_loop(void);
 void commandLine(void);
 int32_t getIntParameter(char *cmdLine, uint8_t num);
 char * getTokenPointer(char *cmdLine, uint8_t num);
+uint8_t txBufferBytes();
 
