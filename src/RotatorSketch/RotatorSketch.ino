@@ -181,22 +181,24 @@ void loop()
 		digitalWrite(12, LOW);
 		servoEnabledLast = false;
 	}
-	switch(txnum++){
-		case 0:	transmitAnalogIn(&accelerometerX, acc.x); break;
-		case 1: transmitAnalogIn(&accelerometerY, acc.y); break;
-		case 2: transmitAnalogIn(&accelerometerZ, acc.z); break;
-		case 3: transmitAnalogIn(&magnetometerX, mag.x); break;
-		case 4: transmitAnalogIn(&magnetometerY, mag.y); break;
-		case 5: transmitAnalogIn(&magnetometerZ, mag.z); break;
-		case 6: transmitAnalogIn(&magneticAzimuth, magAzi); break;
-		case 7: transmitAnalogIn(&azimuthDelta, aziDelta); break;
-		case 8: transmitAnalogIn(&gyroX, gyr.x); break;
-		case 9: transmitAnalogIn(&gyroY, gyr.y); break;
-		case 10: transmitAnalogIn(&gyroZ, gyr.z); break;
-		case 11: transmitAnalogIn(&temperature, compensateTemperature(readTemperatureUncal(0x77), &cal)); txnum = 0;break;
-		default:
-			txnum = 0;
-		break;
+		if(txBufferBytes()==0){
+		switch(txnum++){
+			case 0:	transmitAnalogIn(&accelerometerX, acc.x); break;
+			case 1: transmitAnalogIn(&accelerometerY, acc.y); break;
+			case 2: transmitAnalogIn(&accelerometerZ, acc.z); break;
+			case 3: transmitAnalogIn(&magnetometerX, mag.x); break;
+			case 4: transmitAnalogIn(&magnetometerY, mag.y); break;
+			case 5: transmitAnalogIn(&magnetometerZ, mag.z); break;
+			case 6: transmitAnalogIn(&magneticAzimuth, magAzi); break;
+			case 7: transmitAnalogIn(&azimuthDelta, aziDelta); break;
+			case 8: transmitAnalogIn(&gyroX, gyr.x); break;
+			case 9: transmitAnalogIn(&gyroY, gyr.y); break;
+			case 10: transmitAnalogIn(&gyroZ, gyr.z); break;
+			case 11: transmitAnalogIn(&temperature, compensateTemperature(readTemperatureUncal(0x77), &cal)); txnum = 0;break;
+			default:
+				txnum = 0;
+			break;
+		}
 	}
 	commandLine();
 }

@@ -17,6 +17,9 @@ volatile int8_t rxByte  = 0;
 volatile uint8_t dataOverrun = 0;
 
 const char nl[] PROGMEM = "\r\n";
+uint8_t txBufferBytes(){
+	return txByte+1;
+}
 
 void waitTransmissionIdle()
 {

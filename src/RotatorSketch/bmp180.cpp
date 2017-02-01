@@ -19,11 +19,11 @@ int16_t readTemperatureUncal(uint8_t devAddr){
 
 
 int32_t compensateTemperature(int16_t temperature, calibrationCoefficient_t *cal){
-	Serial.print("ac6 "); Serial.println(cal->ac6);
-	Serial.print("ac5 "); Serial.println(cal->ac5);
-	Serial.print("mc "); Serial.println(cal->mc);
-	Serial.print("md "); Serial.println(cal->md);
-	Serial.print("ut "); Serial.println(temperature);
+	//Serial.print("ac6 "); Serial.println(cal->ac6);
+	//Serial.print("ac5 "); Serial.println(cal->ac5);
+	//Serial.print("mc "); Serial.println(cal->mc);
+	//Serial.print("md "); Serial.println(cal->md);
+	//Serial.print("ut "); Serial.println(temperature);
 	int32_t x1 = ((temperature-cal->ac6)*cal->ac5) >> 15;
 	int32_t x2 = ((cal->mc)<<11)/(x1+cal->md);
 	int32_t b5 = x1+x2;
