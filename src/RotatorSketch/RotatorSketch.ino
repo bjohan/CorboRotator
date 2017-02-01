@@ -20,7 +20,7 @@ typedef struct{
 
 uint8_t servoPower = 0;
 uint8_t servoEnabled = 0;
-uint8_t lastServoEnabled = 0;
+uint8_t lastServoEnabled = 1;
 uint16_t azimuth = 0;
 
 
@@ -120,9 +120,10 @@ void setup()
 {
   pinMode(12, OUTPUT);
   pinMode(LED_BUILTIN, OUTPUT);
+  digitalWrite(12, LOW);
   Wire.begin();
   Serial.begin(9600);
-  rotserv.attach(9);
+  //rotserv.attach(9);
   initLsm303(0x1D);
   initL3gd20(0x6B);
   initBmp180(0x77, &cal);
@@ -177,7 +178,6 @@ void loop()
 	} else {
 		if(servoEnabledLast)
 			rotserv.detach();
-		digitalWrite(LED_BUILTIN, LOW);
 		digitalWrite(12, LOW);
 		servoEnabledLast = false;
 	}
