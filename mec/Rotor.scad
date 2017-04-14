@@ -383,10 +383,10 @@ module nema17Mount(){
                             sphere(1);
                         }
                     }
-                }
+                }*/
                 translate([0,0,5+25/2])
                     radialHoles(200,4/2);
-                */
+                
             }
             
             translate([65, 0, 0]){
@@ -685,9 +685,20 @@ module electronics1Placed(){
     }
 }
 
+module electronics15Placed(){
+    //servoMount();
+    translate([-42-32, 63, 75]){
+        rotate([90,0,-90]){
+            //shelfModuleOdd(85, 60, 0, 10, 3/2);
+            translate([0, 0, 10])
+                electronics15FixtureModule();
+        }
+    }
+}
+
 module electronics2Placed(){
     //servoMount();
-    translate([-42, 63, 75]){
+    translate([-42-32, 63, 75]){
         rotate([90,0,-90]){
             //shelfModuleOdd(85, 60, 0, 10, 3/2);
             translate([0, 0, 40]){
@@ -699,7 +710,7 @@ module electronics2Placed(){
 
 module electronics3Placed(){
     //servoMount();
-    translate([-42-82, 63, 75]){
+    translate([-42-82-32, 63, 75]){
         rotate([90,0,-90]){
             //shelfModuleOdd(85, 60, 0, 10, 3/2);
             translate([0, 0, 40]){
@@ -806,19 +817,20 @@ module nema17WithGearHolder(){
 //electronics1FixtureModule();
 //electronics15FixtureModule();
 //electronics2FixtureModule();
-electronics3FixtureModule();
+//electronics3FixtureModule();
 
 
 
 
 //nema17Gear();
 //nema17WithGearHolder();
-/*completeAssemblyNema17();
-electronics1Placed();
-electronics2Placed();
-electronics3Placed();*/
+//completeAssemblyNema17();
+//electronics1Placed();
+//electronics15Placed();
+//electronics2Placed();
+//electronics3Placed();
 //nema17GearPlaced();
-//nema17MountWithElectronics();
+nema17MountWithElectronics();
 
 
 //printElectronics1FixtureModule();
