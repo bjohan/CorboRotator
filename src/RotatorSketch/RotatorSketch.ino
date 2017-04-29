@@ -1,5 +1,5 @@
 #include <EEPROM.h>
-#include <Servo.h>
+//#include <Servo.h>
 #include <Wire.h>
 #include "lsm303.h"
 #include "l3gd20.h"
@@ -22,15 +22,27 @@ uint8_t servoPower = 0;
 uint8_t servoEnabled = 0;
 uint8_t lastServoEnabled = 1;
 uint16_t azimuth = 0;
-
+uint8_t stepperP = 5;
+uint8_t stepperDir = 2;
 
 extern "C" {
 
-void setServoPower(int32_t d){ servoPower=d;}
+void setMotorSpeed(int32_t d){
+	int32_t value;
+	if(d < 0){
+		digitalWrite(stepperDir, LOW);
+		d = -d;
+	} else {
+		digitalWrite(stepperDir, HIGH);
+	}
+	value = 250000/d;
+	OCR1A = value;
+	
+}
 void setServoEnabled(uint8_t d){servoEnabled=d;}
 void setAzimuth(int32_t a){azimuth=a;};
 
-ANA_OUT("Servo_power", "%", "0", "100", 0, 255, setServoPower,setServoPowerWidget);
+ANA_OUT("MotorSpeed", "%", "-100", "100", -1024*2, 1024*2, setMotorSpeed,setMotorSpeedWidget);
 ANA_OUT("Azimuth", "deg", "-180", "180", -32768, 32767, setAzimuth, setAzimuthWidget);
 ANA_IN("Azi_delta", "deg", "-180", "180", -32768, 32767, azimuthDelta);
 DIG_OUT("Servo_enabled", setServoEnabled, servoEnabledWidget);
@@ -57,7 +69,7 @@ const CorbomiteEntry initcmd PROGMEM =
 	{EVENT_OUT, internalId, (CorbomiteData*)&initEvent};
 
 const CorbomiteEntry * const entries[] PROGMEM = {
-	&setServoPowerWidget,
+	&setMotorSpeedWidget,
 	&setAzimuthWidget,
 	&azimuthDelta,
 	&servoEnabledWidget,
@@ -78,9 +90,25 @@ const CorbomiteEntry * const entries[] PROGMEM = {
 };
 
 } //extern "C"
-Servo rotserv;
+
+
+
+//Servo rotserv;
 calibrationCoefficient_t cal;
 calibrationCoefficient_t cal2;
+
+
+
+// Interrupt is called once a millisecond, 
+//SIGNAL(TIMER0_COMPA_vect) 
+SIGNAL(TIMER1_COMPA_vect)
+{
+	static int t=0;
+	if((t&0x1)==0)
+		digitalWrite(stepperP, HIGH);
+		digitalWrite(stepperP, LOW);
+	t++;
+}
 
 void printValue(char *name, float value)
 {
@@ -118,6 +146,9 @@ void filter(iir_state_int16_t *fil, int16_t value){
 
 void setup()
 {
+  pinMode(stepperP, OUTPUT);
+  pinMode(stepperDir, OUTPUT);
+  digitalWrite(stepperDir, LOW);
   pinMode(12, OUTPUT);
   pinMode(LED_BUILTIN, OUTPUT);
   digitalWrite(12, LOW);
@@ -127,6 +158,19 @@ void setup()
   initLsm303(0x1D);
   initL3gd20(0x6B);
   initBmp180(0x77, &cal);
+
+  //Set timer1 to 4us resolution
+  TCCR1A = 0;
+  TCCR1B = 0;
+  TCNT1 = 0;
+  OCR1A = 512/6;
+  TCCR1B |= (1 << WGM12);
+  TCCR1B |= (1 << CS10) | (1<<CS11);
+  TIMSK1 |= (1 <<OCIE1A);
+//  OCR0A = 0xAF;
+//  TIMSK0 |= _BV(OCIE0A);
+
+	//setup 
 }
 
 void loop()
@@ -140,6 +184,9 @@ void loop()
 	int16_t vel;
 	static bool servoEnabledLast = false;
 	static iir_state_int16_t fil{0, 0xfff};
+
+
+	//digitalWrite(12, HIGH);
 
 	if(readAccelerometerData(0x1d, &acc) == 0){
 	}
@@ -158,26 +205,26 @@ void loop()
 	}
 	
 	if(servoEnabled && (abs(aziDelta) > 0x0100)){
-		if(not servoEnabledLast)
-			rotserv.attach(9);
+		//if(not servoEnabledLast)
+		//	rotserv.attach(9);
 		digitalWrite(LED_BUILTIN, HIGH);
 		//rotserv.write(88);
 		vel=abs(aziDelta/870)+1;
 
 		if(aziDelta<0){
-			rotserv.write(88+vel);
+			//rotserv.write(88+vel);
 			//rotserv.write(90);
 			transmitDigitalIn(&servoDirectionWidget,1);
 		}else{
-			rotserv.write(88-vel);
+			//rotserv.write(88-vel);
 			//rotserv.write(86);
 			transmitDigitalIn(&servoDirectionWidget,0);
 		}
 		digitalWrite(12, HIGH);
 		servoEnabledLast = true;
 	} else {
-		if(servoEnabledLast)
-			rotserv.detach();
+		//if(servoEnabledLast)
+			//rotserv.detach();
 		digitalWrite(12, LOW);
 		servoEnabledLast = false;
 	}
