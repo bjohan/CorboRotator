@@ -36,9 +36,10 @@ void setMotorSpeed(int32_t d){
 		digitalWrite(stepperDir, HIGH);
 	}
 	value = 250000/d;
-	OCR1A = value;
-	
+	OCR1A = value;	
 }
+
+
 void setServoEnabled(uint8_t d){servoEnabled=d;}
 void setAzimuth(int32_t a){azimuth=a;};
 
@@ -144,6 +145,17 @@ void filter(iir_state_int16_t *fil, int16_t value){
 	fil->value = n >> 15;
 }
 
+
+void stepperPower(uint8_t state){
+	if(state == 0){
+		digitalWrite(8, HIGH);
+		digitalWrite(12, LOW);
+	} else {
+		digitalWrite(8, LOW);
+		digitalWrite(12, HIGH);
+	}
+}
+
 void setup()
 {
   pinMode(stepperP, OUTPUT);
@@ -151,6 +163,7 @@ void setup()
   digitalWrite(stepperDir, LOW);
   pinMode(12, OUTPUT);
   pinMode(LED_BUILTIN, OUTPUT);
+  pinMode(8, OUTPUT);
   digitalWrite(12, LOW);
   Wire.begin();
   Serial.begin(9600);
@@ -175,6 +188,7 @@ void setup()
 
 void loop()
 {
+	static uint16_t tolerance = 0x0200;
 	static uint8_t txnum = 0; 
 	vector3 mag, gyr, acc;
 	int16_t temp;
@@ -183,7 +197,7 @@ void loop()
 	int16_t aziDelta;
 	int16_t vel;
 	static bool servoEnabledLast = false;
-	static iir_state_int16_t fil{0, 0xfff};
+	static iir_state_int16_t fil{0, 0x0fff};
 
 
 	//digitalWrite(12, HIGH);
@@ -204,28 +218,41 @@ void loop()
 	if(readGyroData(0x6b, &gyr) == 0){
 	}
 	
-	if(servoEnabled && (abs(aziDelta) > 0x0100)){
-		//if(not servoEnabledLast)
-		//	rotserv.attach(9);
+	if(servoEnabled && (abs(aziDelta) > tolerance/*0x0100*/)){
+		tolerance = 0x0100;
 		digitalWrite(LED_BUILTIN, HIGH);
-		//rotserv.write(88);
-		vel=abs(aziDelta/870)+1;
+
+		vel = -aziDelta>>0;
+		//if(abs(vel) < 768){
+		//	if(vel < 0)
+		//		vel = -768;
+		//	else
+		//		vel = 768;
+		//}
+			
+		if(vel > 1500)
+			vel = 1500;
+		if(vel < -1500)
+			vel = -1500;
+
+		//vel=abs(aziDelta/870)+1;
 
 		if(aziDelta<0){
-			//rotserv.write(88+vel);
-			//rotserv.write(90);
+			setMotorSpeed(vel);
 			transmitDigitalIn(&servoDirectionWidget,1);
 		}else{
-			//rotserv.write(88-vel);
-			//rotserv.write(86);
+			setMotorSpeed(vel);
 			transmitDigitalIn(&servoDirectionWidget,0);
 		}
-		digitalWrite(12, HIGH);
+		stepperPower(true);
+		//digitalWrite(12, HIGH);
 		servoEnabledLast = true;
 	} else {
+		tolerance = 0x0200;
 		//if(servoEnabledLast)
 			//rotserv.detach();
-		digitalWrite(12, LOW);
+		//digitalWrite(12, LOW);
+		stepperPower(false);
 		servoEnabledLast = false;
 	}
 		if(txBufferBytes()==0){
