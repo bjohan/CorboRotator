@@ -274,7 +274,7 @@ module radialHoles(l, r){
 //pulley(130, 2, 10, 30, 2);
 //teeth(100, 2, 10, 0.5);
 
-mastRad = 30;
+mastRad = 3.5;
 t = 5;
 height = 130;
 mmPerTooth = 4.5;
@@ -333,6 +333,37 @@ module statorGear(){
     
     }
 }
+
+
+
+module tubeStatorGear(){
+    tubeRad = 32.35;
+    //t = 5;
+    //height = 100;
+    difference(){
+        union(){
+            //tube(, mastRad+t, mastRad);
+            tube(30, tubeRad+t*2, tubeRad);
+            
+            translate([0,0,30-6])
+                gear(mmPerTooth,75,12,1);
+                //pulley(124/2, 4, 10, 30, 2);
+        }
+        translate([0,0,9])
+        radialHoles(150, 1.5);
+        cylinder(30, tubeRad, tubeRad);
+        /*relievedSlit(150, 35, 2, 2);
+        rotate([0,0,90])
+            relievedSlit(150, 35, 2, 2);
+        rotate([0,0,45]){
+            relievedSlit(150, 35, 2, 2);
+            rotate([0,0,90])
+                relievedSlit(150, 35, 2, 2);
+        }*/
+    
+    }
+}
+
 
 module servoPlate(t){
     cr = 20;
@@ -810,13 +841,15 @@ module nema17WithGearHolder(){
 
 
 
+tubeStatorGear();
+
 
 //nema17Gear();
 //nema17WithGearHolder();
-completeAssemblyNema17();
+/*completeAssemblyNema17();
 electronics1Placed();
 electronics2Placed();
-electronics3Placed();
+electronics3Placed();*/
 //nema17GearPlaced();
 //nema17MountWithElectronics();
 
